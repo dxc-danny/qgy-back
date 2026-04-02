@@ -1,0 +1,114 @@
+name: 通用规范
+version: 1.0.0
+owner: backend-team
+updated: 2026-04-02
+
+rules:
+  # ========== 开发环境 ==========
+  - id: GEN-001
+    level: MANDATORY
+    category: dev_env
+    description: 开发环境和测试环境必须打印最终执行SQL
+
+  - id: GEN-002
+    level: MANDATORY
+    category: dev_env
+    description: 如果开发环境和测试环境数据不足以支撑验证和测试，则跟运维沟通把生产环境部分数据同步到开发环境和测试环境
+
+  # ========== 分片表 ==========
+  - id: GEN-101
+    level: MANDATORY
+    category: sharding
+    description: 对分片表执行DQL及DML时，必须带上分片键
+
+  # ========== 批量操作 ==========
+  - id: GEN-201
+    level: MANDATORY
+    category: batch
+    description: 批量更新场景用update case when
+    example: |
+      UPDATE table_name
+      SET status = CASE id
+          WHEN 1 THEN 'active'
+          WHEN 2 THEN 'inactive'
+      END
+      WHERE id IN (1, 2)
+
+  - id: GEN-202
+    level: MANDATORY
+    category: batch
+    description: 批量插入或混合场景用insert on duplicate key update
+    example: |
+      INSERT INTO table_name (id, name, status)
+      VALUES (1, 'A', 'active'), (2, 'B', 'inactive')
+      ON DUPLICATE KEY UPDATE
+      name = VALUES(name),
+      status = VALUES(status)
+
+  # ========== 变量重构 ==========
+  - id: GEN-301
+    level: MANDATORY
+    category: refactor
+    description: 修改变量类型或值空间，需要找到所有使用该变量的代码并做对应修正
+
+  - id: GEN-302
+    level: MANDATORY
+    category: refactor
+    description: 修改DTO/PO/BO/DO等对象的字段类型或值空间时，需要修改全链路代码
+    scope:
+      - 生成该对象字段的下游代码
+      - 基于该对象字段执行业务逻辑的代码
+      - 基于该对象字段的上游代码
+      - MySQL的CRUD代码
+      - MongoDB的CRUD代码
+      - ElasticSearch的CRUD代码
+      - Redis的CRUD代码
+      - 消息发送及消费代码（RocketMQ/Kafka）
+      - 数据同步代码
+      - 定时任务代码
+      - 其它项目代码
+    additional: 把该字段优化为枚举类型
+
+  - id: GEN-303
+    level: MANDATORY
+    category: refactor
+    description: 增加或删除DTO/PO/BO/DO等对象的字段时，需要修改全链路代码（范围同上）
+
+  # ========== Map 返回重构 ==========
+  - id: GEN-401
+    level: MANDATORY
+    category: return_type
+    description: 把Controller和Service等类的方法返回的Map按命名规范重构为对象
+
+  # ========== 接口变更 ==========
+  - id: GEN-501
+    level: MANDATORY
+    category: interface_change
+    description: service接口变更时选择以下方案之一
+    options:
+      - name: 方案一
+        description: 将所有相关调用全部更改干净（包括其他子项目）
+        note: 如不清楚其他子项目可联系上级领导
+      - name: 方案二
+        description: 将现有接口做作废标记@Deprecated，说明原因和推荐使用的新接口，然后写新接口
+        steps:
+          - @Deprecated标记旧接口
+          - 写新接口并实现
+          - 向上级领导汇报
+
+  # ========== 返回数据量 ==========
+  - id: GEN-601
+    level: MANDATORY
+    category: return_size
+    description: 接口只返回大前端必需的字段
+    limits:
+      high_frequency: 1K以内
+      low_frequency: 128K以内
+      special: 跟技术经理沟通确认
+
+  # ========== 查询参数校验 ==========
+  - id: GEN-701
+    level: MANDATORY
+    category: query_param
+    description: getByCode及listByCodes等针对索引字段查询数据的场景，必须判断参数是否为空
+    note: 不要把空吃掉了，避免查询出不符合业务逻辑的数据

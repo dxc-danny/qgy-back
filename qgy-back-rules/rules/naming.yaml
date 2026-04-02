@@ -1,0 +1,95 @@
+name: 命名规范
+version: 1.0.0
+owner: backend-team
+updated: 2026-04-02
+
+rules:
+  # ========== DTO 命名 ==========
+  - id: NAME-001
+    level: MANDATORY
+    category: dto
+    description: 接口方法请求的Dto对象，类名后缀为ReqDto
+    example: OperatorUpdateCurrentReqDto
+    apply:
+      - Controller Request
+
+  - id: NAME-002
+    level: MANDATORY
+    category: dto
+    description: 接口方法返回的Dto对象，类名后缀为ResDto
+    example: OperatorLoginResDto
+    apply:
+      - Controller Response
+      - Service Return
+
+  - id: NAME-003
+    level: MANDATORY
+    category: dto
+    description: Dao层的方法直接返回Do对象，类名后缀为Do
+    example: UserDo, OrderDo
+    apply:
+      - Dao/Mapper Return
+
+  # ========== 注解使用 ==========
+  - id: NAME-101
+    level: RECOMMENDED
+    category: annotation
+    description: 接口方法请求注解使用GetMapping, PostMapping, PutMapping, DeleteMapping
+    anti_pattern: RequestMapping
+    apply:
+      - Controller
+
+  # ========== Service 层 ==========
+  - id: NAME-201
+    level: MANDATORY
+    category: service
+    description: Service层的方法禁止返回Result，直接返回Dto对象
+    apply:
+      - Service
+
+  # ========== MySQL 命名 ==========
+  - id: NAME-301
+    level: MANDATORY
+    category: mysql_naming
+    description: 数据库名、表名、字段名必须使用小写字母或数字，禁止数字开头
+    anti_pattern:
+      - GetterAdmin
+      - taskConfig
+      - level_3_name
+    correct_example:
+      - getter_admin
+      - task_config
+      - level3_name
+
+  - id: NAME-302
+    level: MANDATORY
+    category: mysql_naming
+    description: 表名不使用复数名词
+    anti_example: users, orders, products
+    correct_example: user, order, product
+
+  - id: NAME-303
+    level: MANDATORY
+    category: mysql_naming
+    description: 唯一索引名为uk_字段名，普通索引名为idx_字段名
+    index_naming:
+      primary: PRIMARY
+      unique: uk_{field_name}
+      normal: idx_{field_name}
+
+  - id: NAME-304
+    level: MANDATORY
+    category: mysql_naming
+    description: 表达是与否概念的字段，必须使用is_xxx命名，数据类型为unsigned tinyint
+    field_example: is_deleted, is_active, is_verified
+
+  # ========== 分层对象后缀 ==========
+  - id: NAME-401
+    level: MANDATORY
+    category: layer_suffix
+    description: 分层职责命名规范
+    mapping:
+      Controller_input: ReqDto
+      Controller_output: ResDto
+      Service_output: ResDto
+      Dao_output: Do

@@ -1,0 +1,57 @@
+name: 数据导入导出规范
+version: 1.0.0
+owner: backend-team
+updated: 2026-04-02
+
+rules:
+  # ========== 执行原则 ==========
+  - id: IMP-001
+    level: MANDATORY
+    category: execution
+    description: 数据导入导出执行原则
+    rules:
+      - 向技术主管和技术经理申请执行
+      - 晚上低峰期执行
+      - 原则上单平台同时只能运行一个数据导入导出任务
+      - 执行之前技术主管必须确认存储中间件的CPU、QPS、IO使用率等参数是否正常
+    special_case: |
+      如果确实需要白天执行或单平台同时执行多个，必须跟技术经理沟通确认
+
+  # ========== 导出方案选择 ==========
+  - id: IMP-101
+    level: RECOMMENDED
+    category: export_strategy
+    description: 数据导出尽量用异步导出方案
+    exception: 需要实时导出才用同步方案
+
+  # ========== MySQL 深分页 ==========
+  - id: IMP-201
+    level: MANDATORY
+    category: mysql_export
+    description: MySQL导出数据量大于1万必须处理深分页问题
+    threshold: 10000
+    note: 注意排序字段重复问题，如create_time可能会重复，需要使用唯一字段
+
+  # ========== ES 深分页 ==========
+  - id: IMP-202
+    level: MANDATORY
+    category: es_export
+    description: ES导出数据量大于1万必须通过Scroll或SearchAfter+PIT处理深分页
+    threshold: 10000
+    solutions:
+      high_frequency: SearchAfter + PIT
+      normal: Scroll
+
+  # ========== 与数据清洗的区别 ==========
+  - id: IMP-301
+    level: REFERENCE
+    category: difference
+    description: 导入导出与数据清洗的区别
+    comparison:
+      import_export:
+        direction: 数据的导入或导出
+        risk: 数据格式错误、重复导入
+      data_cleaning:
+        direction: 数据的修改或迁移
+        risk: 数据修改错误、影响业务
+        isolation: 必须隔离Mapper

@@ -1,0 +1,87 @@
+name: 分页规范
+version: 1.0.0
+owner: backend-team
+updated: 2026-04-02
+
+rules:
+  # ========== 前端接口分页 ==========
+  - id: PAGE-001
+    level: MANDATORY
+    category: frontend
+    description: 前端接口页大小禁止大于100，推荐值为10
+    check:
+      type: MAX_VALUE
+      field: pageSize
+      max: 100
+      recommend: 10
+    apply:
+      - Frontend API
+      - Mobile API
+
+  # ========== 普通深分页 ==========
+  - id: PAGE-002
+    level: MANDATORY
+    category: deep_pagination
+    description: 普通深分页页大小禁止大于100
+    check:
+      type: MAX_VALUE
+      field: pageSize
+      max: 100
+    apply:
+      - Deep Pagination API
+
+  # ========== 导出深分页 ==========
+  - id: PAGE-003
+    level: MANDATORY
+    category: export
+    description: 导出深分页页大小禁止大于500
+    check:
+      type: MAX_VALUE
+      field: pageSize
+      max: 500
+    apply:
+      - Export API
+      - Data Migration
+
+  # ========== 深分页解决方案 ==========
+  - id: PAGE-101
+    level: RECOMMENDED
+    category: deep_pagination_solution
+    description: 大数据量导出优先使用游标分页（Cursor Pagination），避免OFFSET性能问题
+    solutions:
+      - name: 游标分页
+        description: 使用id或时间戳作为游标
+        example: |
+          WHERE id > #{lastId} ORDER BY id LIMIT #{pageSize}
+      - name: 延迟关联
+        description: 子查询先取ID，再关联查询
+        example: |
+          SELECT a.* FROM table1 a,
+          (SELECT id FROM table1 WHERE condition LIMIT 100000,20) b
+          WHERE a.id=b.id
+
+  # ========== 遍历限制 ==========
+  - id: PAGE-201
+    level: MANDATORY
+    category: iteration
+    description: 禁止在前端接口中循环调用存储中间件
+    storage:
+      - MySQL
+      - ElasticSearch
+      - MongoDB
+      - Redis
+    apply:
+      - Frontend API
+      - Open API
+
+  - id: PAGE-202
+    level: MANDATORY
+    category: iteration_export
+    description: 导出数据迁移中循环调用存储中间件必须睡眠100-200ms
+    sleep:
+      min: 100
+      max: 200
+      unit: ms
+    apply:
+      - Export
+      - Data Migration

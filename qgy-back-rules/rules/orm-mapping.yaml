@@ -1,0 +1,81 @@
+name: ORM映射规范
+version: 1.0.0
+owner: backend-team
+updated: 2026-04-02
+
+rules:
+  # ========== 查询字段 ==========
+  - id: ORM-001
+    level: MANDATORY
+    category: select
+    description: 表查询禁止使用*，必须明确列出所需字段
+
+  # ========== 布尔字段 ==========
+  - id: ORM-002
+    level: MANDATORY
+    category: boolean
+    description: POJO类的布尔属性不能加is前缀，但数据库字段必须为is_xxx
+    correct: success (not isSuccess)
+    db_field: is_xxx
+    mapping: resultMap
+
+  # ========== 返回类型 ==========
+  - id: ORM-003
+    level: MANDATORY
+    category: return_type
+    description: 不要用resultClass作为返回参数，即使属性与字段一一对应也必须定义resultMap
+    requirement: 每个表对应一个DO类
+
+  # ========== 参数绑定 ==========
+  - id: ORM-004
+    level: MANDATORY
+    category: parameter
+    description: XML配置中参数使用#{}，禁止使用${}
+    correct: '#{}'
+    forbidden: '${}'
+    reason: 防止SQL注入
+
+  # ========== 分页查询 ==========
+  - id: ORM-005
+    level: MANDATORY
+    category: pagination
+    description: 不推荐使用queryForList(String, int, int)，会全量查询再subList，有OOM风险
+    alternative: 使用分页参数 #start#、#size#
+
+  # ========== 返回类型禁止 ==========
+  - id: ORM-006
+    level: MANDATORY
+    category: return_type
+    description: 禁止直接使用HashMap/Hashtable作为查询结果集输出
+
+  # ========== 更新时间 ==========
+  - id: ORM-007
+    level: MANDATORY
+    category: update_time
+    description: 更新记录时必须同时更新update_time为当前时间
+
+  # ========== 更新策略 ==========
+  - id: ORM-008
+    level: RECOMMENDED
+    category: update
+    description: 不要写全字段更新接口，只更新实际变化的字段
+
+  # ========== 事务 ==========
+  - id: ORM-009
+    level: REFERENCE
+    category: transaction
+    description: @Transactional不要滥用，需考虑回滚方案
+    considerations:
+      - 缓存
+      - 搜索引擎
+      - 消息补偿
+
+  # ========== 动态SQL ==========
+  - id: ORM-010
+    level: REFERENCE
+    category: dynamic_sql
+    description: 动态SQL标签用法
+    tags:
+      isEqual: compareValue为常量，通常比较数字
+      isNotEmpty: 不为空且不为null
+      isNotNull: 不为null

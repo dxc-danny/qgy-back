@@ -1,0 +1,40 @@
+name: 消息队列规范
+version: 1.0.0
+owner: backend-team
+updated: 2026-04-02
+
+rules:
+  # ========== 幂等性 ==========
+  - id: MQ-001
+    level: MANDATORY
+    category: idempotent
+    description: 消息消费必须实现幂等逻辑
+    exception: 如果重复消费没有副作用则可不实现幂等逻辑
+
+  # ========== 幂等实现方案 ==========
+  - id: MQ-101
+    level: REFERENCE
+    category: idempotent_solution
+    description: 方案一：唯一键去重
+    example: |
+      @RabbitListener(queues = "xxx")
+      public void consume(Message msg) {
+          String uniqueKey = msg.getId();
+          if (idempotentService.isProcessed(uniqueKey)) {
+              return;
+          }
+          doBusiness(msg);
+          idempotentService.markProcessed(uniqueKey);
+      }
+
+  - id: MQ-102
+    level: REFERENCE
+    category: idempotent_solution
+    description: 方案二：数据库唯一索引
+    note: 利用数据库唯一索引防止重复插入
+
+  - id: MQ-103
+    level: REFERENCE
+    category: idempotent_solution
+    description: 方案三：分布式锁
+    note: 使用分布式锁（如Redis）保证同一消息只被处理一次

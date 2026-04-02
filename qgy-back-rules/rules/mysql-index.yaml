@@ -1,0 +1,128 @@
+name: MySQL索引规范
+version: 1.0.0
+owner: backend-team
+updated: 2026-04-02
+
+rules:
+  # ========== 唯一索引 ==========
+  - id: IDX-001
+    level: MANDATORY
+    category: unique_index
+    description: 业务上具有唯一特性的字段（包括组合字段）必须建立唯一索引
+    apply:
+      - Unique Fields
+
+  # ========== 普通索引 ==========
+  - id: IDX-002
+    level: MANDATORY
+    category: index_creation
+    description: 查询涉及的字段若无索引，必须加索引
+    apply:
+      - Query Fields
+
+  - id: IDX-003
+    level: MANDATORY
+    category: index_limit
+    description: 索引字段数超过5个，考虑改用ElasticSearch
+    threshold: 5
+    alternative: ElasticSearch
+
+  # ========== JOIN 规范 ==========
+  - id: IDX-101
+    level: MANDATORY
+    category: join
+    description: 超过三个表禁止JOIN
+    max_tables: 3
+
+  - id: IDX-102
+    level: MANDATORY
+    category: join
+    description: JOIN的字段数据类型必须一致，且被关联字段必须有索引
+    apply:
+      - JOIN Operations
+
+  # ========== varchar 索引 ==========
+  - id: IDX-201
+    level: MANDATORY
+    category: varchar_index
+    description: 在varchar字段上建索引时，必须指定索引长度
+    method: calculate_selectivity
+    target_selectivity: 0.9
+    typical_length: 20
+
+  # ========== 模糊查询 ==========
+  - id: IDX-301
+    level: MANDATORY
+    category: like_query
+    description: 页面搜索严禁左模糊或全模糊，必须走搜索引擎
+    forbidden:
+      - LIKE '%xx'
+      - LIKE '%xx%'
+    alternative: Search Engine
+
+  # ========== 索引命名 ==========
+  - id: IDX-401
+    level: MANDATORY
+    category: naming
+    description: 索引命名规范
+    naming:
+      primary: PRIMARY
+      unique: uk_{field_name}
+      normal: idx_{field_name}
+
+  # ========== ORDER BY ==========
+  - id: IDX-501
+    level: MANDATORY
+    category: order_by
+    description: ORDER BY的字段应放在组合索引的最后，避免范围查询破坏有序性
+    correct: 'WHERE a=? AND b=? ORDER BY c → idx(a,b,c)'
+    forbidden: 'WHERE a>10 ORDER BY b → idx(a,b) 无法利用排序'
+
+  # ========== 覆盖索引 ==========
+  - id: IDX-601
+    level: RECOMMENDED
+    category: covering_index
+    description: 使用覆盖索引避免回表
+    indicator: Extra: Using index
+
+  # ========== 深分页优化 ==========
+  - id: IDX-701
+    level: RECOMMENDED
+    category: deep_pagination
+    description: 超大分页场景使用延迟关联或子查询优化
+    example: |
+      SELECT a.* FROM table1 a,
+      (SELECT id FROM table1 WHERE condition LIMIT 100000,20) b
+      WHERE a.id=b.id
+
+  # ========== SQL 性能 ==========
+  - id: IDX-801
+    level: RECOMMENDED
+    category: sql_performance
+    description: SQL性能目标至少达到range级别，要求ref级别，最好consts
+    levels:
+      consts: 单表最多一个匹配行（主键/唯一索引）
+      ref: 普通索引
+      range: 索引范围检索
+      forbidden: type=index（全索引扫描）
+
+  # ========== 组合索引 ==========
+  - id: IDX-901
+    level: RECOMMENDED
+    category: composite_index
+    description: 组合索引时，区分度最高的放在最左边
+    principle: 等号条件列前置
+
+  # ========== 索引下推 ==========
+  - id: IDX-1001
+    level: RECOMMENDED
+    category: index_pushdown
+    description: 确认并利用索引下推（MySQL 5.6+）
+    setting: optimizer_switch index_condition_pushdown=on
+
+  # ========== 无索引操作 ==========
+  - id: IDX-1101
+    level: MANDATORY
+    category: no_index_operation
+    description: 禁止对无索引字段进行DELETE或UPDATE操作
+    requirement: 必须通过id进行

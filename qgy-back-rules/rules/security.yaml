@@ -1,0 +1,97 @@
+name: 安全规范
+version: 1.0.0
+owner: backend-team
+updated: 2026-04-02
+
+rules:
+  # ========== 哈希算法 ==========
+  - id: SEC-001
+    level: MANDATORY
+    category: hash
+    description: token哈希必须使用HMAC512
+    algorithm: HMAC512
+    apply:
+      - Token Storage
+      - Session Management
+
+  - id: SEC-002
+    level: MANDATORY
+    category: hash
+    description: 密码哈希必须使用sha256
+    algorithm: SHA256
+    apply:
+      - Password Storage
+      - User Authentication
+
+  - id: SEC-003
+    level: MANDATORY
+    category: hash
+    description: 验证码哈希使用md5
+    algorithm: MD5
+    apply:
+      - Verification Code
+
+  # ========== 权限校验 ==========
+  - id: SEC-101
+    level: MANDATORY
+    category: authorization
+    description: 后端接口要增加操作权限和数据权限判断
+    apply:
+      - Backend API
+      - Write Operations
+
+  # ========== 参数校验 ==========
+  - id: SEC-201
+    level: MANDATORY
+    category: validation
+    description: 后端写接口必须自己做参数校验，不要依赖前端
+    principle: 永远不要相信前端校验，后端必须独立校验所有输入
+    apply:
+      - Write API
+      - Public API
+
+  # ========== SQL 注入防护 ==========
+  - id: SEC-301
+    level: MANDATORY
+    category: sql_injection
+    description: MyBatis XML配置中参数使用#{}，禁止使用${}
+    correct: '#{}'
+    forbidden: '${}'
+    apply:
+      - MyBatis Mapper
+      - SQL Query
+
+  # ========== 敏感信息 ==========
+  - id: SEC-401
+    level: MANDATORY
+    category: sensitive_data
+    description: 敏感信息必须使用不可逆哈希存储
+    apply:
+      - Password
+      - Verification Code
+      - Personal Information
+
+  # ========== 安全原则 ==========
+  - id: SEC-501
+    level: MANDATORY
+    category: principle
+    description: 禁止在外键与级联，所有外键约束在应用层解决
+    apply:
+      - Database Design
+      - DML Operations
+
+  - id: SEC-502
+    level: MANDATORY
+    category: principle
+    description: 禁止使用存储过程
+    apply:
+      - Database Design
+
+  - id: SEC-503
+    level: MANDATORY
+    category: principle
+    description: 数据订正(DELETE/UPDATE)前必须先SELECT确认
+    apply:
+      - Data Correction
+      - Batch Update
+      - Batch Delete

@@ -1,0 +1,96 @@
+name: SQL编写规范
+version: 1.0.0
+owner: backend-team
+updated: 2026-04-02
+
+rules:
+  # ========== COUNT 用法 ==========
+  - id: SQL-001
+    level: MANDATORY
+    category: count
+    description: 不要用count(列名)或count(常量)替代count(*)
+    correct: 'COUNT(*)'
+    reason: count(*)统计所有行（含NULL）
+
+  - id: SQL-002
+    level: MANDATORY
+    category: count
+    description: count(distinct col)计算非NULL的不重复数量
+    note: count(distinct col1, col2)中若任一列全为NULL，结果为0
+
+  # ========== NULL 处理 ==========
+  - id: SQL-101
+    level: MANDATORY
+    category: null_handling
+    description: 某列全为NULL时，count(col)返回0，sum(col)返回NULL，避免NPE
+    correct_example: SELECT IF(ISNULL(SUM(g)), 0, SUM(g)) FROM table
+
+  - id: SQL-102
+    level: MANDATORY
+    category: null_handling
+    description: 使用ISNULL()判断NULL，注意NULL与任何值比较结果均为NULL
+    note: NULL = NULL 的结果是 NULL
+
+  # ========== 分页 ==========
+  - id: SQL-201
+    level: MANDATORY
+    category: pagination
+    description: 分页查询时，若count为0应直接返回，不执行后续分页语句
+
+  # ========== 外键和存储过程 ==========
+  - id: SQL-301
+    level: MANDATORY
+    category: foreign_key
+    description: 不得使用外键与级联，所有外键约束在应用层解决
+
+  - id: SQL-302
+    level: MANDATORY
+    category: stored_procedure
+    description: 禁止使用存储过程
+
+  # ========== 数据订正 ==========
+  - id: SQL-401
+    level: MANDATORY
+    category: data_correction
+    description: 数据订正(DELETE/UPDATE)前必须先SELECT确认
+
+  # ========== IN 用法 ==========
+  - id: SQL-501
+    level: RECOMMENDED
+    category: in_clause
+    description: 避免使用IN，如无法避免则集合元素数量控制在1000以内
+
+  # ========== 字符集 ==========
+  - id: SQL-601
+    level: REFERENCE
+    category: charset
+    description: 全球化应用使用utf8编码，字符长度用CHARACTER_LENGTH而非LENGTH
+
+  - id: SQL-602
+    level: REFERENCE
+    category: charset
+    description: 需要表情符号时使用utf8mb4
+
+  # ========== TRUNCATE ==========
+  - id: SQL-701
+    level: REFERENCE
+    category: truncate
+    description: 禁止在代码中使用TRUNCATE TABLE（无事务、不触发trigger）
+
+  # ========== 触发器 ==========
+  - id: SQL-801
+    level: REFERENCE
+    category: trigger
+    description: 谨慎使用触发器，避免嵌套，关注性能影响
+
+  # ========== 插入更新 ==========
+  - id: SQL-901
+    level: RECOMMENDED
+    category: insert_update
+    description: 插入时若唯一键重复则更新，使用INSERT...ONDUPLICATEKEYUPDATE
+
+  # ========== 全文检索 ==========
+  - id: SQL-1001
+    level: RECOMMENDED
+    category: fulltext
+    description: 大数据量模糊匹配时建立FULLTEXT索引，使用MATCH()AGAINST()检索

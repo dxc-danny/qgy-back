@@ -1,0 +1,72 @@
+name: 输入清洗规范
+version: 1.0.0
+owner: backend-team
+updated: 2026-04-02
+
+rules:
+  # ========== 主体名称清洗 ==========
+  - id: INPUT-001
+    level: MANDATORY
+    category: name_cleaning
+    description: 主体名称必须在持久化前清洗（调用QgyStrUtil.cleanBlank）
+    applies_to:
+      - 姓名
+      - 商户名称
+      - 客户名称
+      - 公司名称
+      - 点位名称
+      - 店铺名称
+      - 活动名称
+      - 广告名称
+      - 商品名称
+    method: QgyStrUtil.cleanBlank
+    timing: 执行业务逻辑或持久化到存储中间件之前
+
+  - id: INPUT-002
+    level: REFERENCE
+    category: name_cleaning
+    description: 如果名称中间需要保留空格，使用QgyStrUtil.cleanBlankKeepVisible
+    method: QgyStrUtil.cleanBlankKeepVisible
+
+  # ========== 主体编码清洗 ==========
+  - id: INPUT-101
+    level: MANDATORY
+    category: code_cleaning
+    description: 主体编码必须在持久化前清洗（调用QgyStrUtil.cleanBlank）
+    applies_to:
+      - 商品条码
+      - 商品编码
+      - 点位编码
+      - 组织编码
+      - 商户商品条码
+    method: QgyStrUtil.cleanBlank
+    timing: 执行业务逻辑或持久化到存储中间件之前
+
+  # ========== 其它信息清洗 ==========
+  - id: INPUT-201
+    level: MANDATORY
+    category: other_cleaning
+    description: 其它信息必须在持久化前清洗（调用QgyStrUtil.cleanBlank）
+    applies_to:
+      - 提货卷码
+      - 手机号码
+      - 电话号码
+    method: QgyStrUtil.cleanBlank
+    timing: 执行业务逻辑或持久化到存储中间件之前
+
+  # ========== 清洗时机 ==========
+  - id: INPUT-301
+    level: MANDATORY
+    category: timing
+    description: 所有清洗操作必须在执行业务逻辑或持久化到存储中间件之前执行
+    storage:
+      - MySQL
+      - ElasticSearch
+      - MongoDB
+      - Redis
+
+  # ========== 不确认处理 ==========
+  - id: INPUT-401
+    level: REFERENCE
+    category: uncertainty
+    description: 不确认是否需要清洗时，找技术主管沟通

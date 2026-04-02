@@ -1,0 +1,79 @@
+name: 数据清洗规范
+version: 1.0.0
+owner: backend-team
+updated: 2026-04-02
+
+rules:
+  # ========== 研发流程 ==========
+  - id: CLEAN-001
+    level: MANDATORY
+    category: process
+    description: 按标准研发流程执行
+    steps:
+      - 编写技术方案
+      - 评审
+      - 开发
+      - 自测（数据项及分片表）
+      - 测试
+      - 线上小范围验证（通常1条数据）
+      - 正式清洗
+
+  # ========== 数据一致性 ==========
+  - id: CLEAN-101
+    level: MANDATORY
+    category: consistency
+    description: 数据清洗时必须严格遵守数据一致性原则
+    rules:
+      - 如果数据只需要更新，那就只能存在更新代码
+      - 如果数据只需要插入，那就只能存在插入代码
+      - 禁止同时存在不必要的更新和插入逻辑
+
+  # ========== 批量大小 ==========
+  - id: CLEAN-201
+    level: MANDATORY
+    category: batch_size
+    description: 批量大小选择要多维度考虑
+    considerations:
+      - 数据一致性要求
+      - 清洗时长
+      - 对业务的影响程度
+      - 数据重要性
+    range: 1-500
+
+  # ========== Mapper 隔离 ==========
+  - id: CLEAN-301
+    level: MANDATORY
+    category: mapper_isolation
+    description: 数据清洗与业务需求用到的Mapper文件SQL必须隔离
+    requirement:
+      - 必须隔离
+      - 必须写注释
+      - 防止相互影响
+      - 避免引起线上事故
+
+  # ========== 批次处理 ==========
+  - id: CLEAN-401
+    level: MANDATORY
+    category: batch_processing
+    description: 必须按批次清洗数据，禁止循环遍历单条查询
+    forbidden_pattern: |
+      for (Long id : ids) {
+          Item item = itemDao.getById(id); // 单条查询
+      }
+    correct_pattern: |
+      List<Item> items = itemDao.getByIds(ids); // 批量查询
+    hazard: |
+      循环单条查询会造成存储中间件负载及QPS双高，甚至造成IOPS使用率高，影响其它业务正常执行
+
+  # ========== 执行原则 ==========
+  - id: CLEAN-501
+    level: MANDATORY
+    category: execution
+    description: 数据清洗执行原则
+    rules:
+      - 向技术主管和技术经理申请执行
+      - 晚上低峰期执行
+      - 原则上单平台同时只能运行一个数据清洗任务
+      - 执行之前技术主管必须确认存储中间件的CPU、QPS、IO使用率等参数是否正常
+    special_case: |
+      如果确实需要白天执行或单平台同时执行多个，必须跟技术经理沟通确认

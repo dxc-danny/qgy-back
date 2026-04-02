@@ -1,0 +1,12 @@
+业务场景,Java字段类型,MySQL字段类型,ES字段类型,说明
+日期时间,LocalDateTime,datetime,-,推荐
+纯日期,LocalDate,date,-,推荐
+金额(业务),BigDecimal,BIGINT(分),-,乘以100存储
+金额(财务),BigDecimal,DECIMAL(16,2),-,财务/税务场景
+布尔值,Boolean,unsigned tinyint,-,is_xxx命名
+删除标记,Long,unsigned bigint,-,0未删除,毫秒时间戳删除
+JSON数据,String,TEXT,-,或独立成表
+长文本,String,TEXT,-,超5000字符
+主键ID,Long,BIGINT UNSIGNED,-,自增
+ES日期时间,ZonedDateTime,-,strict_date_time,format: DateFormat.date_time
+ES纯日期,String,-,yyyy-MM-ddXXX,搜索时转换时区

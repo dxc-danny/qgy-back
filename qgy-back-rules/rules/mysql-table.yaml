@@ -1,0 +1,207 @@
+name: MySQL建表规范
+version: 1.0.0
+owner: backend-team
+updated: 2026-04-02
+
+rules:
+  # ========== 表必备字段 ==========
+  - id: TBL-001
+    level: MANDATORY
+    category: table_structure
+    description: 表必备三字段：id(BIGINT UNSIGNED自增)、create_time、update_time
+    fields:
+      - name: id
+        type: BIGINT UNSIGNED
+        extra: AUTO_INCREMENT
+        comment: 主键ID
+      - name: create_time
+        type: datetime
+        default: CURRENT_TIMESTAMP
+        comment: 创建时间
+      - name: update_time
+        type: datetime
+        default: CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        comment: 更新时间
+    apply:
+      - All Tables
+
+  # ========== 布尔字段 ==========
+  - id: TBL-002
+    level: MANDATORY
+    category: boolean_field
+    description: 表达是与否概念的字段，必须使用is_xxx命名，数据类型为unsigned tinyint
+    example: is_deleted, is_active, is_verified
+    type: unsigned tinyint
+    values:
+      - 1: 是
+      - 0: 否
+
+  # ========== 数值字段 ==========
+  - id: TBL-003
+    level: MANDATORY
+    category: number_field
+    description: 任何非负数字段必须是unsigned
+    apply:
+      - All Numeric Fields
+
+  - id: TBL-004
+    level: MANDATORY
+    category: decimal_field
+    description: 小数类型使用decimal，禁止float/double
+    correct: DECIMAL
+    forbidden:
+      - FLOAT
+      - DOUBLE
+    apply:
+      - Price Field
+      - Amount Field
+      - Decimal Field
+
+  - id: TBL-005
+    level: MANDATORY
+    category: amount_field
+    description: 业务场景金额用bigint存储分（乘以100），禁止int/float/double
+    example: amount = 100 表示 1.00元
+    type: bigint
+    scale: 2
+    apply:
+      - Business Amount
+      - Price
+      - Stock
+
+  - id: TBL-006
+    level: MANDATORY
+    category: decimal_amount
+    description: 财务/税务场景用decimal(16,2)
+    type: DECIMAL(16,2)
+    apply:
+      - Finance
+      - Accounting
+      - Tax
+
+  # ========== 字符串字段 ==========
+  - id: TBL-101
+    level: MANDATORY
+    category: varchar_field
+    description: varchar长度设为2的N次方，最大不超过5000
+    length_examples:
+      code: 32
+      key: 64
+      url: 255
+      header: 128
+      name: 32
+      phone: 32
+      remark: 512
+    apply:
+      - VARCHAR Field
+
+  - id: TBL-102
+    level: MANDATORY
+    category: text_field
+    description: 超过5000的字段使用text，独立成表通过主键关联
+    apply:
+      - Large Text Field
+
+  - id: TBL-103
+    level: MANDATORY
+    category: string_type
+    description: 字符串类型尽量使用varchar，不用char
+    reason: 修改char长度会触发copy并阻塞DML
+
+  # ========== 日期字段 ==========
+  - id: TBL-201
+    level: RECOMMENDED
+    category: datetime_field
+    description: datetime字段默认值为1970-01-01 00:00:00
+    default: '1970-01-01 00:00:00'
+    apply:
+      - Datetime Field
+
+  - id: TBL-202
+    level: RECOMMENDED
+    category: date_field
+    description: date字段默认值为1970-01-01
+    default: '1970-01-01'
+    apply:
+      - Date Field
+
+  # ========== 字符集 ==========
+  - id: TBL-301
+    level: MANDATORY
+    category: charset
+    description: 数据编码使用utf8mb4_unicode_ci
+    charset: utf8mb4
+    collate: utf8mb4_unicode_ci
+
+  - id: TBL-302
+    level: MANDATORY
+    category: charset
+    description: 需要区分大小写时使用utf8mb4_bin
+    collate: utf8mb4_bin
+
+  # ========== NULL 和默认值 ==========
+  - id: TBL-401
+    level: MANDATORY
+    category: null_default
+    description: 字段必须设置默认值，不能为NULL
+    defaults:
+      numeric: 0
+      string: ''
+      json: '[] or {}'
+
+  # ========== 命名规范 ==========
+  - id: TBL-501
+    level: MANDATORY
+    category: naming
+    description: 数据库名、表名、字段名必须使用小写字母或数字，禁止数字开头
+    pattern: '^[a-z][a-z0-9_]*$'
+
+  - id: TBL-502
+    level: MANDATORY
+    category: naming
+    description: 表名不使用复数名词
+    anti_example: users, orders
+
+  - id: TBL-503
+    level: MANDATORY
+    category: naming
+    description: 禁用保留字
+    reference: MySQL Official Reserved Words
+
+  # ========== 注释 ==========
+  - id: TBL-601
+    level: MANDATORY
+    category: comment
+    description: 数据库、表及字段必须有简明知义的说明
+    required: true
+
+  # ========== 表命名 ==========
+  - id: TBL-701
+    level: RECOMMENDED
+    category: table_naming
+    description: 表命名格式：业务名称_表作用
+    example: tiger_task, mpp_config
+
+  - id: TBL-702
+    level: RECOMMENDED
+    category: table_naming
+    description: 库名与应用名称尽量一致
+
+  # ========== 冗余字段 ==========
+  - id: TBL-801
+    level: RECOMMENDED
+    category: redundancy
+    description: 允许适当冗余字段以提高性能
+    conditions:
+      - 不是频繁修改的字段
+      - 不是varchar超长或text字段
+    example: 商品类目名称可冗余
+
+  # ========== 分库分表 ==========
+  - id: TBL-901
+    level: RECOMMENDED
+    category: sharding
+    description: 单表行数超过500万或容量超过2GB才考虑分库分表
+    thresholds:
+      rows: 5000000
+      size: 2GB

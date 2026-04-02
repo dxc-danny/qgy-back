@@ -1,0 +1,102 @@
+name: ElasticSearch规范
+version: 1.0.0
+owner: backend-team
+updated: 2026-04-02
+
+rules:
+  # ========== 日期时间字段 ==========
+  - id: ES-001
+    level: RECOMMENDED
+    category: datetime_field
+    description: 日期时间类型字段映射
+    mapping:
+      java:
+        type: ZonedDateTime
+        format: DateFormat.date_time
+        pattern: not_set
+      es:
+        type: date
+        format: strict_date_time
+    note: 搜索时直接传入ZonedDateTime对象，不需要转换为当前时区时间字符串
+    legacy_note: 历史Java侧使用了Date和自定义格式的，搜索时需要带上时区
+
+  # ========== 纯日期字段 ==========
+  - id: ES-002
+    level: RECOMMENDED
+    category: date_field
+    description: 纯日期类型字段映射
+    mapping:
+      java:
+        type: String
+        format: '{}'
+        pattern: uuuu-MM-ddXXX
+      es:
+        type: date
+        format: yyyy-MM-ddXXX
+    note: 搜索时需要把ZonedDateTime对象转换为带当前时区的时间字符串
+
+  # ========== 导出方案选择 ==========
+  - id: ES-101
+    level: RECOMMENDED
+    category: export_strategy
+    description: 高频场景导出（如用户场景）使用SearchAfter+PIT
+    use_case: high_frequency_export
+    solution: SearchAfter + PIT
+
+  - id: ES-102
+    level: RECOMMENDED
+    category: export_strategy
+    description: 一般场景导出（如后台场景）使用Scroll
+    use_case: normal_export
+    solution: Scroll
+
+  # ========== 深分页处理 ==========
+  - id: ES-201
+    level: MANDATORY
+    category: deep_pagination
+    description: 导出数据量大于1万必须通过Scroll或SearchAfter+PIT处理深分页
+    threshold: 10000
+    solutions:
+      - SearchAfter + PIT
+      - Scroll
+
+  - id: ES-202
+    level: MANDATORY
+    category: deep_pagination
+    description: 注意排序字段重复问题，使用唯一字段（如id）或复合排序
+    solution_example: |
+      sort: [
+        { "create_time": "asc" },
+        { "id": "asc" }
+      ]
+
+  # ========== SearchAfter + PIT 示例 ==========
+  - id: ES-301
+    level: REFERENCE
+    category: example
+    description: SearchAfter + PIT 查询示例
+    example: |
+      {
+        "query": { "match_all": {} },
+        "sort": [
+          { "create_time": "asc" },
+          { "id": "asc" }
+        ],
+        "size": 1000,
+        "pit": {
+          "id": "<pit_id>",
+          "keep_alive": "5m"
+        }
+      }
+
+  # ========== Scroll 示例 ==========
+  - id: ES-302
+    level: REFERENCE
+    category: example
+    description: Scroll 查询示例
+    example: |
+      {
+        "query": { "match_all": {} },
+        "scroll": "5m",
+        "size": 1000
+      }
